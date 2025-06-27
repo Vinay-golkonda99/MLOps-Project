@@ -1,6 +1,0 @@
-tempo:
-  queryFrontend:
-    query:
-      enabled: true
-  metricsGenerator:
-    enabled: true
