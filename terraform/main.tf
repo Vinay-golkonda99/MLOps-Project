@@ -52,6 +52,6 @@ module "eks" {
 
   tags = {
     Environment = "dev"
-    Project     = "mlops"
+    Project     = "mlops-1"
   }
 }
