@@ -1,0 +1,76 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docker/**'
+      - 'code-base/**'
+      - '.github/workflows/**'
+
+jobs:
+  terraform:
+    name: 🌱 Provision EKS Infrastructure
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v3
+
+    - name: 🔑 Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: 🧰 Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: ⚙️ Terraform Init & Plan
+      working-directory: terraform
+      run: |
+        terraform init 
+        terraform plan -out=tfplan
+        
+    - name: 🚀 Terraform Apply
+      working-directory: terraform
+      run: terraform apply tfplan
+
+  build-and-deploy:
+    needs: terraform
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v3
+
+    - name: 🛠️ Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: 🔐 Login to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: 🐳 Build and Push Docker Image
+      run: |
+        docker build -t vinaygolkonda99/llm_deps:llm_app -f docker/Dockerfile.app .
+        docker push vinaygolkonda99/llm_deps:llm_app
+
+    - name: 🔑 Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: 📡 Update kubeconfig for EKS
+      run: |
+        aws eks update-kubeconfig --region us-east-1 --name mlops-cluster
+
+    - name: 🚀 Deploy to EKS
+      run: |
+        kubectl apply -f K8s/deployment.yaml 
+        kubectl apply -f K8s/service.yaml
