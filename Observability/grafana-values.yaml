@@ -1,1 +1,41 @@
+adminPassword: admin123
+service:
+  type: LoadBalancer
 
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        type: loki
+        url: http://loki.monitoring.svc.cluster.local:3100
+      - name: Tempo
+        type: tempo
+        url: http://tempo.monitoring.svc.cluster.local:3100
+      - name: Mimir
+        type: prometheus
+        url: http://mimir-gateway.monitoring.svc.cluster.local
+
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: default
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards
+
+dashboards:
+  default:
+    llm-app:
+      file: /var/lib/grafana/dashboards/llm-app-dashboard.json
+    node-exporter:
+      file: /var/lib/grafana/dashboards/node-exporter-dashboard.json
+
+persistence:
+  enabled: true
+  existingClaim: grafana-pvc
