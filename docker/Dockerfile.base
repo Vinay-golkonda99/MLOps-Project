@@ -1,4 +1,6 @@
-# Builder Stage
+# --------------------------
+# 🧱 Builder Stage
+# --------------------------
 FROM python:3.10.11-slim-buster as builder
 
 WORKDIR /build
@@ -24,33 +26,25 @@ RUN cd /opt/oracle/instantclient_19_18 && \
 
 RUN echo /opt/oracle/instantclient_19_18 > /etc/ld.so.conf.d/oracle-instantclient.conf && ldconfig
 
-
-# Model Builder Stage
-FROM python:3.10.11-slim-buster AS model_builder
-
-RUN pip install --no-cache-dir huggingface_hub nltk
-
-# Download NLTK data and model from Huggingface repo
-RUN python -m nltk.downloader punkt stopwords wordnet
-
-RUN python -c "from huggingface_hub import snapshot_download;snapshot_download(repo_id='BEE-spoke-data/smol_llama-101M-GQA',local_dir='/mnt/models/Deepseek',local_dir_use_symlinks=False)"
-
-
-# OpenJDK 19 builder stage
+# --------------------------
+# ☕ OpenJDK Stage
+# --------------------------
 FROM debian:bullseye-slim AS openjdk17_builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-17-jdk-headless && \
     rm -rf /var/lib/apt/lists/*
 
-
-# Final Runtime Stage
+# --------------------------
+# 🏁 Final Runtime Stage
+# --------------------------
 FROM python:3.10.11-slim-buster
 
 WORKDIR /app
 
 RUN mkdir -p /var/log/containers
 
+# System dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         libaio1 \
@@ -61,24 +55,30 @@ RUN apt-get update && \
         nginx && \
     rm -rf /var/lib/apt/lists/*
 
+# Copy Oracle + Python deps
 COPY --from=builder /opt/oracle /opt/oracle
 COPY --from=builder /etc/ld.so.conf.d/oracle-instantclient.conf /etc/ld.so.conf.d/oracle-instantclient.conf
+COPY --from=builder /python-deps /usr/local/lib/python3.10/site-packages
 RUN ldconfig
 
-COPY --from=builder /python-deps /usr/local/lib/python3.10/site-packages
+# Install runtime Python dependencies
+RUN pip install --no-cache-dir huggingface_hub nltk
+RUN python -m nltk.downloader punkt stopwords wordnet
 
-# Copy models and nltk data from model_builder stage
-COPY --from=model_builder /mnt/models/Deepseek /mnt/models/Deepseek
-COPY --from=model_builder /root/nltk_data /root/nltk_data
-
+# Copy Java
 COPY --from=openjdk17_builder /usr/lib/jvm/java-17-openjdk-amd64 /usr/lib/jvm/java-17-openjdk-amd64
 
+# Set environment variables
 ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_19_18:$LD_LIBRARY_PATH
 ENV PATH=/opt/oracle/instantclient_19_18:$PATH
 ENV PYTHONPATH=/usr/local/lib/python3.10/site-packages
 ENV NLTK_DATA=/root/nltk_data
 ENV MODEL_PATH=/mnt/models/Deepseek
-
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 ENV PATH=$JAVA_HOME/bin:$PATH
 
+# Copy your app code (if not already done in another layer)
+# COPY . .
+
+# Set entrypoint if needed
+# ENTRYPOINT ["python", "main.py"]
