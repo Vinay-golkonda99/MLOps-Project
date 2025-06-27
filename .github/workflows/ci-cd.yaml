@@ -17,16 +17,6 @@ jobs:
   terraform:
     name: 🌱 Provision EKS Infrastructure
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event_name == 'push' &&
-        (
-          contains(join('\n', github.event.commits.*.modified), 'terraform/') ||
-          contains(join('\n', github.event.commits.*.modified), '.tf') ||
-          contains(join('\n', github.event.commits.*.modified), 'backend.tf')
-        )
-      )
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v3
@@ -52,16 +42,6 @@ jobs:
     name: 🚀 Build Docker & Deploy to EKS
     runs-on: ubuntu-latest
     needs: terraform
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event_name == 'push' &&
-        (
-          contains(join('\n', github.event.commits.*.modified), 'docker/') ||
-          contains(join('\n', github.event.commits.*.modified), 'code-base/') ||
-          contains(join('\n', github.event.commits.*.modified), 'K8s/')
-        )
-      )
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v3
@@ -100,15 +80,6 @@ jobs:
     name: 📊 Install Mimir, Grafana, Loki & Tempo
     runs-on: ubuntu-latest
     needs: terraform
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event_name == 'push' &&
-        (
-          contains(join('\n', github.event.commits.*.modified), 'monitoring/') ||
-          contains(join('\n', github.event.commits.*.modified), '.github/workflows/')
-        )
-      )
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v3
