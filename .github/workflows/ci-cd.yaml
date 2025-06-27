@@ -4,14 +4,17 @@ on:
   push:
     branches: [ main ]
     paths:
+      - 'terraform/**'
       - 'docker/**'
       - 'code-base/**'
       - '.github/workflows/**'
 
 jobs:
   terraform:
-    name: 🌱 Provision EKS Infrastructure
+    name: 🌱 Provision EKS Infrastructure (only if Terraform code changes)
     runs-on: ubuntu-latest
+
+    if: contains(toJson(github.event.head_commit.modified), 'terraform/')
 
     steps:
     - name: 📥 Checkout Code
@@ -32,12 +35,14 @@ jobs:
       run: |
         terraform init 
         terraform plan -out=tfplan
-        
-    - name: 🚀 Terraform Apply
-      working-directory: terraform
-      run: terraform apply tfplan
+
+    #- name: 🚀 Terraform Apply (optional, uncomment for auto-apply)
+    #  working-directory: terraform
+    #  run: terraform apply tfplan
+
 
   build-and-deploy:
+    name: 🚀 Build Docker & Deploy to EKS
     needs: terraform
     runs-on: ubuntu-latest
 
