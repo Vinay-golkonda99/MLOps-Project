@@ -1,1 +1,3 @@
-
+gateway:
+  service:
+    type: ClusterIP
