@@ -8,10 +8,13 @@ on:
       - 'code-base/**'
       - '.github/workflows/**'
 
+  workflow_dispatch:  # 👈 Enable manual trigger for Terraform job
+
 jobs:
   terraform:
     name: 🌱 Provision EKS Infrastructure
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'  # 👈 Run ONLY when triggered manually
 
     steps:
     - name: 📥 Checkout Code
@@ -32,13 +35,14 @@ jobs:
       run: |
         terraform init 
         terraform plan -out=tfplan
-        
-    #- name: 🚀 Terraform Apply
-      #working-directory: terraform
-      #run: terraform apply tfplan
+
+    # Optional apply (uncomment if needed)
+    # - name: 🚀 Terraform Apply
+    #   working-directory: terraform
+    #   run: terraform apply -auto-approve tfplan
 
   build-and-deploy:
-    needs: terraform
+    name: 🚀 Build & Deploy App to EKS
     runs-on: ubuntu-latest
 
     steps:
