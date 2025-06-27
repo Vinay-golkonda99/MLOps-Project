@@ -6,10 +6,7 @@ on:
     paths:
       - 'docker/**'
       - 'code-base/**'
-      - 'K8s/**'
-      - 'terraform/**'
-
-  workflow_dispatch:  # manual trigger
+      - '.github/workflows/**'
 
 jobs:
   terraform:
@@ -30,24 +27,15 @@ jobs:
     - name: 🧰 Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
-    - name: ⛔ Skip if no Terraform changes
-      id: tf_check
-      run: |
-        git fetch origin main
-        if git diff --quiet origin/main -- terraform/; then
-          echo "No Terraform changes detected."
-          echo "run_tf=false" >> $GITHUB_ENV
-        else
-          echo "Terraform changes detected."
-          echo "run_tf=true" >> $GITHUB_ENV
-        fi
-
     - name: ⚙️ Terraform Init & Plan
-      if: env.run_tf == 'true' || github.event_name == 'workflow_dispatch'
       working-directory: terraform
       run: |
-        terraform init
+        terraform init 
         terraform plan -out=tfplan
+        
+    - name: 🚀 Terraform Apply
+      working-directory: terraform
+      run: terraform apply tfplan
 
   build-and-deploy:
     needs: terraform
