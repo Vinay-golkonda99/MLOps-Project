@@ -8,7 +8,7 @@ on:
       - 'code-base/**'
       - 'docker/**'
       - 'K8s/**'
-      - 'monitoring/**'
+      - 'Observability/**'
       - '.github/workflows/**'
 
   workflow_dispatch:
