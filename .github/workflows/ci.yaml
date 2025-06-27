@@ -76,70 +76,60 @@ jobs:
           kubectl apply -f K8s/deployment.yaml
           kubectl apply -f K8s/service.yaml
 
+
   observability-stack:
-    name: 📊 Install Mimir, Grafana, Loki & Tempo
-    runs-on: ubuntu-latest
-    needs: terraform
-    steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v3
+   name: 📊 Install Mimir, Grafana, Loki & Tempo
+   runs-on: ubuntu-latest
+   needs: terraform
 
-      - name: 🔑 Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+   steps:
+     - name: 📥 Checkout Code
+       uses: actions/checkout@v3
 
-      - name: 🧭 Update kubeconfig
-        run: |
-          aws eks update-kubeconfig --region us-east-1 --name mlops-cluster
+     - name: 🔑 Configure AWS Credentials
+       uses: aws-actions/configure-aws-credentials@v2
+       with:
+         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+         aws-region: us-east-1
 
-      - name: 🛠️ Install Helm
-        uses: azure/setup-helm@v3
+     - name: 🧭 Update kubeconfig
+       run: |
+         aws eks update-kubeconfig --region us-east-1 --name mlops-cluster
 
-      - name: 📦 Add Helm Repos
-        run: |
-          helm repo add grafana https://grafana.github.io/helm-charts
-          helm repo update
-          kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
+     - name: 🛠️ Install Helm
+       uses: azure/setup-helm@v3
 
-      - name: ⚙️ Install Grafana Mimir
-        run: |
-          helm upgrade --install mimir grafana/mimir-distributed \
-            --namespace monitoring \
-            --set gateway.service.type=ClusterIP
+     - name: 📦 Add Helm Repos & Namespace
+       run: |
+         helm repo add grafana https://grafana.github.io/helm-charts
+         helm repo update
+         kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: 🔍 Install Loki (Logs)
-        run: |
-          helm upgrade --install loki grafana/loki-stack \
-            --namespace monitoring \
-            --set grafana.enabled=false
+     - name: ⚙️ Install Mimir
+       run: |
+         helm upgrade --install mimir grafana/mimir-distributed \
+           --namespace monitoring \
+           -f observability/mimir/helm-values.yaml
 
-      - name: 🧭 Install Tempo (Traces)
-        run: |
-          helm upgrade --install tempo grafana/tempo-distributed \
-            --namespace monitoring \
-            --set tempo.queryFrontend.query.enabled=true \
-            --set tempo.metricsGenerator.enabled=true
+     - name: 🔍 Install Loki
+       run: |
+         helm upgrade --install loki grafana/loki-stack \
+           --namespace monitoring \
+           -f observability/loki/helm-values.yaml
 
-      - name: 📊 Install Grafana
-        run: |
-          helm upgrade --install grafana grafana/grafana \
-            --namespace monitoring \
-            --set service.type=LoadBalancer \
-            --set adminPassword='admin123' \
-            --set datasources."datasources\.yaml".apiVersion=1 \
-            --set datasources."datasources\.yaml".datasources[0].name=Loki \
-            --set datasources."datasources\.yaml".datasources[0].type=loki \
-            --set datasources."datasources\.yaml".datasources[0].url=http://loki.monitoring.svc.cluster.local:3100 \
-            --set datasources."datasources\.yaml".datasources[1].name=Tempo \
-            --set datasources."datasources\.yaml".datasources[1].type=tempo \
-            --set datasources."datasources\.yaml".datasources[1].url=http://tempo.monitoring.svc.cluster.local:3100 \
-            --set datasources."datasources\.yaml".datasources[2].name=Mimir \
-            --set datasources."datasources\.yaml".datasources[2].type=prometheus \
-            --set datasources."datasources\.yaml".datasources[2].url=http://mimir-gateway.monitoring.svc.cluster.local
+     - name: 🧭 Install Tempo
+       run: |
+         helm upgrade --install tempo grafana/tempo-distributed \
+           --namespace monitoring \
+           -f observability/tempo/helm-values.yaml
 
-      - name: 📡 Output Grafana LoadBalancer URL
-        run: |
-          kubectl get svc -n monitoring grafana
+     - name: 📊 Install Grafana
+       run: |
+         helm upgrade --install grafana grafana/grafana \
+           --namespace monitoring \
+           -f observability/grafana/helm-values.yaml
+
+     - name: 📡 Output Grafana LoadBalancer URL
+       run: |
+         kubectl get svc -n monitoring grafana
