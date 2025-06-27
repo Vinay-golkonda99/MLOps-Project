@@ -38,4 +38,3 @@ dashboards:
 
 persistence:
   enabled: true
-  existingClaim: grafana-pvc
