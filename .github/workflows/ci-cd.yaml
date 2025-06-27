@@ -6,15 +6,15 @@ on:
     paths:
       - 'docker/**'
       - 'code-base/**'
-      - '.github/workflows/**'
+      - 'K8s/**'
+      - 'terraform/**'
 
-  workflow_dispatch:  # 👈 Enable manual trigger for Terraform job
+  workflow_dispatch:  # manual trigger
 
 jobs:
   terraform:
     name: 🌱 Provision EKS Infrastructure
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'  # 👈 Run ONLY when triggered manually
 
     steps:
     - name: 📥 Checkout Code
@@ -30,19 +30,27 @@ jobs:
     - name: 🧰 Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
+    - name: ⛔ Skip if no Terraform changes
+      id: tf_check
+      run: |
+        git fetch origin main
+        if git diff --quiet origin/main -- terraform/; then
+          echo "No Terraform changes detected."
+          echo "run_tf=false" >> $GITHUB_ENV
+        else
+          echo "Terraform changes detected."
+          echo "run_tf=true" >> $GITHUB_ENV
+        fi
+
     - name: ⚙️ Terraform Init & Plan
+      if: env.run_tf == 'true' || github.event_name == 'workflow_dispatch'
       working-directory: terraform
       run: |
-        terraform init 
+        terraform init
         terraform plan -out=tfplan
 
-    # Optional apply (uncomment if needed)
-    # - name: 🚀 Terraform Apply
-    #   working-directory: terraform
-    #   run: terraform apply -auto-approve tfplan
-
   build-and-deploy:
-    name: 🚀 Build & Deploy App to EKS
+    needs: terraform
     runs-on: ubuntu-latest
 
     steps:
