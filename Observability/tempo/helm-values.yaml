@@ -1,10 +1,15 @@
-tempo:
-  metricsGenerator:
-    enabled: true
+metricsGenerator:
+  enabled: true
 
-  traces:
-    otlp:
-      grpc:
-        enabled: true
-      http:
-        enabled: true
+traces:
+  otlp:
+    grpc:
+      enabled: true
+    http:
+      enabled: true
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /data/tempo
