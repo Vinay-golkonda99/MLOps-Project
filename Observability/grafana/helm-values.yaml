@@ -1,5 +1,8 @@
 adminPassword: admin123
 
+service:
+  type: LoadBalancer
+
 datasources:
   datasources.yaml:
     apiVersion: 1
