@@ -18,7 +18,8 @@ spec:
         - name: llm-container
           image: vinaygolkonda99/llm_deps:llm_app
           ports:
-            - containerPort: 1999
+            - name: http                # ✅ Added for Prometheus PodMonitor
+              containerPort: 1999      # App + /metrics runs here
           env:
             - name: MODEL_PATH
               value: /mnt/models/Deepseek
