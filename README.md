@@ -1,2 +1,21 @@
 # DevOps-Project
 A DevOps Project trying to gradually evolve into MLOps
+
+
+# 🤖 MLOps Project with EKS, ArgoCD & Observability
+
+This project demonstrates a production-grade basic MLOps pipeline that deploys a HuggingFace LLM-based Flask API to AWS EKS using GitHub Actions, ArgoCD, and monitors it using Grafana, Loki, Tempo, and Mimir.
+
+---
+
+## 🔧 Tech Stack
+
+| Component         | Purpose                                |
+|------------------|----------------------------------------|
+| **Flask + Transformers** | ML Model Serving (LLM API)       |
+| **Docker**        | Containerize the ML API                |
+| **EKS (AWS)**     | Kubernetes Cluster                     |
+| **Terraform**     | Infrastructure as Code (EKS + IAM)     |
+| **ArgoCD**        | GitOps-based Deployment                |
+| **GitHub Actions**| CI/CD Pipeline                         |
+| **Grafana + Mimir + Loki + Tempo** | Observability Stack    |
