@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/<your-username>/<your-repo>.git
+    repoURL: https://github.com/Vinay-golkonda99/MLOps-Project.git
     targetRevision: main
     path: observability/grafana
     helm:
