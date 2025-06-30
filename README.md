@@ -2,7 +2,7 @@
 A DevOps Project trying to gradually evolve into MLOps
 
 
-# 🤖 MLOps Project with EKS, ArgoCD & Observability
+# 🤖 MLOps Project with Terraform, Docker, EKS, ArgoCD & Observability(LGTM)
 
 This project demonstrates a production-grade basic MLOps pipeline that deploys a HuggingFace LLM-based Flask API to AWS EKS using GitHub Actions, ArgoCD, and monitors it using Grafana, Loki, Tempo, and Mimir.
 
