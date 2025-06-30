@@ -1,10 +1,9 @@
-mimir:
-  structuredConfig:
-    limits:
-      max_series_per_user: 500000
-    blocks_storage:
-      backend: filesystem
-      filesystem:
-        dir: /data
-  ingester:
-    replicas: 1
+structuredConfig:
+  limits:
+    max_series_per_user: 500000
+  blocks_storage:
+    backend: filesystem
+    filesystem:
+      dir: /data
+ingester:
+  replicas: 1
